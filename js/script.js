@@ -44,6 +44,7 @@ var AreaModel = function() {
 */
   this.sortTrash = function() {
     this.trash.sort(function(a, b) {
+      if(a.mostRecent == undefined || b.mostRecent == undefined) return 0; //回収なしを考慮
       var at = a.mostRecent.getTime();
       var bt = b.mostRecent.getTime();
       if (at < bt) return -1;
@@ -84,6 +85,9 @@ var TrashModel = function(_lable, _cell) {
       result_text += "毎週" + this.dayCell[j] + "曜日 ";
     } else if (this.dayCell[j].length == 2) {
       result_text += "第" + this.dayCell[j].charAt(1) + this.dayCell[j].charAt(0) + "曜日 ";
+    } else if (this.dayCell[j] == "") {
+      result_text = "この地域では回収を行っていません。";
+      this.regularFlg = 0;  // 定期回収フラグオフ
     } else {
       // 不定期回収の場合（YYYYMMDD指定）
       result_text = "不定期 ";
@@ -93,7 +97,7 @@ var TrashModel = function(_lable, _cell) {
   this.dayLabel = result_text;
 
   this.getDateLabel = function() {
-    var result_text = this.mostRecent.getFullYear() + "/" + (1 + this.mostRecent.getMonth()) + "/" + this.mostRecent.getDate();
+    var result_text = this.mostRecent != null ? this.mostRecent.getFullYear() + "/" + (1 + this.mostRecent.getMonth()) + "/" + this.mostRecent.getDate() : "";
     return this.dayLabel + " " + result_text;
   }
 
@@ -439,7 +443,7 @@ if(descriptions.length>5){
 
           var dateLabel = trash.getDateLabel();
           //あと何日かを計算する処理です。
-          var leftDay = Math.ceil((trash.mostRecent.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          var leftDay = trash.mostRecent != null ? Math.ceil((trash.mostRecent.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : -1;// -1は回収なし
 
           var leftDayText = "";
           if (leftDay == 0) {
@@ -448,6 +452,8 @@ if(descriptions.length>5){
             leftDayText = "明日";
           } else if (leftDay == 2) {
             leftDayText = "明後日"
+          } else if (leftDay == -1) {
+            leftDayText = "";
           } else {
             leftDayText = leftDay + "日後";
           }
