@@ -85,7 +85,9 @@ var TrashModel = function(_lable, _cell, remarks) {
     if (this.dayCell[j].length == 1) {
       result_text += "毎週" + this.dayCell[j] + "曜日 ";
     } else if (this.dayCell[j].length == 2 && this.dayCell[j].substr(0,1) != "*") {
-      result_text += "第" + this.dayCell[j].charAt(1) + this.dayCell[j].charAt(0) + "曜日 ";    } else if (this.dayCell[j].length == 2 && this.dayCell[j].substr(0,1) == "*") {    } else if (this.dayCell[j] == "") {
+      result_text += "第" + this.dayCell[j].charAt(1) + this.dayCell[j].charAt(0) + "曜日 ";
+    } else if (this.dayCell[j].length == 2 && this.dayCell[j].substr(0,1) == "*") {    
+    } else if (this.dayCell[j] == "") {
       result_text = "この地域では回収を行っていません。";
       this.regularFlg = 0;  // 定期回収フラグオフ
     } else {
