@@ -57,7 +57,8 @@ var AreaModel = function() {
 /**
   各ゴミのカテゴリを管理するクラスです。
 */
-var TrashModel = function(_lable, _cell) {
+var TrashModel = function(_lable, _cell, remarks) {
+  this.remarks = remarks;
   this.dayLabel;
   this.mostRecent;
   this.dayList;
@@ -83,9 +84,8 @@ var TrashModel = function(_lable, _cell) {
   for (var j in this.dayCell) {
     if (this.dayCell[j].length == 1) {
       result_text += "毎週" + this.dayCell[j] + "曜日 ";
-    } else if (this.dayCell[j].length == 2) {
-      result_text += "第" + this.dayCell[j].charAt(1) + this.dayCell[j].charAt(0) + "曜日 ";
-    } else if (this.dayCell[j] == "") {
+    } else if (this.dayCell[j].length == 2 && this.dayCell[j].substr(0,1) != "*") {
+      result_text += "第" + this.dayCell[j].charAt(1) + this.dayCell[j].charAt(0) + "曜日 ";    } else if (this.dayCell[j].length == 2 && this.dayCell[j].substr(0,1) == "*") {    } else if (this.dayCell[j] == "") {
       result_text = "この地域では回収を行っていません。";
       this.regularFlg = 0;  // 定期回収フラグオフ
     } else {
@@ -98,7 +98,7 @@ var TrashModel = function(_lable, _cell) {
 
   this.getDateLabel = function() {
     var result_text = this.mostRecent != null ? this.mostRecent.getFullYear() + "/" + (1 + this.mostRecent.getMonth()) + "/" + this.mostRecent.getDate() : "";
-    return this.dayLabel + " " + result_text;
+    return this.getRemark() + this.dayLabel + " " + result_text;
   }
 
   var day_enum = ["日", "月", "火", "水", "木", "金", "土"];
@@ -110,6 +110,22 @@ var TrashModel = function(_lable, _cell) {
       }
     };
     return -1;
+  }
+  /**
+   * このごみ収集日が特殊な条件を持っている場合備考を返します。収集日データに"*n" が入っている場合に利用されます
+   */
+  this.getRemark = function getRemark() {
+    var ret = "";
+    this.dayCell.forEach(function(day){
+      if (day.substr(0,1) == "*") {
+        remarks.forEach(function(remark){
+          if (remark.id == day.substr(1,1)){
+            ret += remark.text + "<br/>";
+          }
+        });
+      };
+    });
+    return ret;
   }
   /**
   このゴミの年間のゴミの日を計算します。
@@ -260,6 +276,15 @@ var TargetRowModel = function(data) {
   this.furigana = data[3];
 }
 
+/**
+ * ゴミ収集日に関する備考を管理するクラスです。
+ * remarks.csvのモデルです。
+ */
+var RemarkModel = function(data) {
+  this.id = data[0];
+  this.text = data[1];
+}
+
 /* var windowHeight; */
 
 $(function() {
@@ -268,6 +293,7 @@ $(function() {
   var center_data = new Array();
   var descriptions = new Array();
   var areaModels = new Array();
+  var remarks = new Array();
 /*   var descriptions = new Array(); */
 
 
@@ -312,7 +338,7 @@ $(function() {
         //２列目以降の処理
         for (var r = 2; r < 2 + MaxDescription; r++) {
           if (area_days_label[r]) {
-            var trash = new TrashModel(area_days_label[r], row[r]);
+            var trash = new TrashModel(area_days_label[r], row[r], remarks);
             area.trash.push(trash);
           }
         }
@@ -361,6 +387,13 @@ $(function() {
 
 
   function createMenuList(after_action) {
+    // 備考データを読み込む
+    csvToArray("data/remarks.csv", function(data) {
+      data.shift();
+      for (var i in data) {
+        remarks.push(new RemarkModel(data[i]));
+      }
+    });
     csvToArray("data/description.csv", function(data) {
       data.shift();
       for (var i in data) {
@@ -402,10 +435,11 @@ $(function() {
     //トラッシュの近い順にソートします。
     areaModel.sortTrash();
   var accordion_height = window.innerHeight / descriptions.length;
-if(descriptions.length>5){
-    if (accordion_height<100) {accordion_height=100;};
+    if(descriptions.length>4){
+      accordion_height = window.innerHeight / 4.1;
+      if (accordion_height>140) {accordion_height = window.innerHeight / descriptions.length;};
+      if (accordion_height<130) {accordion_height=130;};
 }
-    
     var styleHTML = "";
     var accordionHTML = "";
     //アコーディオンの分類から対応の計算を行います。
