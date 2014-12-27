@@ -4,6 +4,7 @@
   エリア(ごみ処理の地域）を管理するクラスです。
 */
 var AreaModel = function() {
+  this.firstLabel;
   this.label;
   this.centerName;
   this.center;
@@ -333,12 +334,14 @@ $(function() {
       for (var i in tmp) {
         var row = tmp[i];
         var area = new AreaModel();
-        area.label = row[0];
-        area.centerName = row[1];
+        var colIdx = 0;
+        area.firstLabel = row[colIdx++];
+        area.label = row[colIdx++];
+        area.centerName = row[colIdx++];
 
         areaModels.push(area);
-        //２列目以降の処理
-        for (var r = 2; r < 2 + MaxDescription; r++) {
+        // ゴミ種別列 以降の処理
+        for (var r = colIdx; r < colIdx + MaxDescription; r++) {
           if (area_days_label[r]) {
             var trash = new TrashModel(area_days_label[r], row[r], remarks);
             area.trash.push(trash);
@@ -369,11 +372,30 @@ $(function() {
         var area_select_form = $("#select_area");
         var select_html = "";
         select_html += '<option value="-1">地域を選択してください</option>';
+
+        // 第1エリアの切り替わりチェック用変数
+        var tempFirstArea = "";
+
         for (var row_index in areaModels) {
+          // 第1エリア（optgroupタグ）の開始
+          var firstLabel = areaModels[row_index].firstLabel;
+          if (tempFirstArea != firstLabel) {
+              if (row_index > 0) {
+                select_html += '</optgroup>';
+              }
+              select_html += '<optgroup label="' + firstLabel + '">';
+              tempFirstArea = firstLabel;
+          }
+
           var area_name = areaModels[row_index].label;
           var selected = (selected_name == area_name) ? 'selected="selected"' : "";
 
           select_html += '<option value="' + row_index + '" ' + selected + " >" + area_name + "</option>";
+        }
+
+        // 第1エリア（optgroupタグ）の終了
+        if (areaModels.length > 0) {
+          select_html += '</optgroup>';
         }
 
         //デバッグ用
